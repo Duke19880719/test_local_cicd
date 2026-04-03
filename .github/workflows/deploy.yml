@@ -1,0 +1,38 @@
+name: Vue CI/CD (Local Deploy)
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to local folder
+        shell: cmd
+        run: |
+          if not exist dist (
+            echo dist not found
+            exit 1
+          )
+          xcopy dist C:\deploy\vueapp /E /I /Y
+
+      - name: Start server
+        shell: cmd
+        run: |
+          start /B npx serve -s C:\deploy\vueapp -l 5000

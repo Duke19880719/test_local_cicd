@@ -14,9 +14,8 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.12.1",
     "@vue/cli-service": "^5.0.9",
-    "cache-loader": "^1.2.5",
-    "webpack": "^5.105.4",
-    "vue-loader": "^16.8.3"
+    "vue-loader": "^16.8.3",
+    "webpack": "^5.105.4"
   },
   "eslintConfig": {
     "root": true,

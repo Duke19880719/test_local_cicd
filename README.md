@@ -1,132 +1,85 @@
-# 📌 專案名稱：test_local_cicd
+# 本地 CI/CD 配置與 GitHub Actions 自動化部署 (Vue 專案)
 
-## 📌 專案說明
+本文檔說明了如何使用 **GitHub Actions** 和 **本地部署** 配置 **Vue.js** 專案的 **CI/CD 管道**。
 
-這是一個使用 **Vue CLI 建置的 Vue 3 專案**，並搭配 **GitHub Actions + Self‑Hosted Runner** 實作 CI/CD（自動建置 & 本地部署）。
+## 前置條件
 
-目標是：
-
-✅ 在 commit 推到 master 時自動執行建置流程  
-✅ 自動編譯 production bundle  
-✅ 部署到本地資料夾  
-✅ 启动靜態伺服器
-
-主要技術：
-
-- Vue 3 + Vue CLI  
-- GitHub Actions  
-- Self‑Hosted Runner（Windows）  
-- Node.js 18  
-- VS Code 開發
+1. **Node.js**（版本 18.x 或更新版本）。
+2. **Vue CLI**（或者使用 **Vite**，取決於你的選擇）。
+3. 擁有 **GitHub 帳號** 和一個 **GitHub 儲存庫** 來存放你的程式碼。
+4. **GitHub Actions Runner**（用於本地部署）。
 
 ---
 
-## 🗂️ 專案結構
-├─ .github
-│ └─ workflows
-│ └─ deploy.yml # GitHub Actions CI/CD 設定
-├─ src # Vue 專案原始碼
-├─ public
-├─ package.json
-├─ README.md
-├─ dist # build 輸出（GitHub Actions 會自動產生）
-└─ ...
+## 步驟 1：初始化你的 Vue 專案
 
+你可以選擇使用 **Vue CLI** 或 **Vite** 來建立你的 Vue.js 專案。
 
----
-
-## 💡 開發環境需求
-
-| 工具/套件 | 版本 |
-|-----------|------|
-| Node.js   | 18.x（LTS） |
-| npm       | 10.x（配合 Node 18） |
-| Vue CLI   | 5.x |
-| GitHub Actions | 自動化流程 |
-| Self‑Hosted Runner | Windows runner |
-
----
-
-# 🚀 本地開發流程
-
-1. **安裝 Node 18**
-   - 建議安裝 Node 18 LTS 版本（不要太新如 Node 20）  
-   - Vue CLI 5 對新 Node 版本尚未完全支援（舊依賴可能限制版本）([github.com](https://github.com/vuejs/vue-cli/issues/7424?utm_source=chatgpt.com))
-
-2. **檢查 Node / npm 版本**
+### 使用 Vue CLI 創建專案
 
 ```bash
-node -v      # 應為 18.x
-npm -v       # 應為 10.x
+npm install -g @vue/cli
+vue create my-project
 
-3. 安裝專案依賴
-npm install
 
-4. 本地建置
-npm run build
+步驟 2：設置本地 GitHub Actions Runner
 
-5. 本地啟動
-npm run serve
+為了讓 GitHub Actions 可以在本地運行（在你的伺服器或機器上），你需要配置一個自託管的 Runner。
 
-🧪 Self‑Hosted Runner（本地 CI/CD Runner）設定
-📍 Windows runner 安裝
-在 GitHub Repo → Settings → Actions → Runners
-新增 runner，選 Windows
-下載 runner，解壓到資料夾（例：C:\actions-runner）
-📍 重新 config runner
+創建 Runner 資料夾：
+進入 C: 磁碟（或者你選擇的其他磁碟）。
+創建一個名為 actions-runner 的資料夾（例如：C:\actions-runner）。
+下載並配置 GitHub Actions Runner：
+前往你的儲存庫的 Settings > Actions > Runners > Add Runner。
+按照 GitHub 提供的步驟，下載相應版本的 runner 並生成註冊令牌。
+安裝並配置 Runner：
+打開命令提示符（或 PowerShell），進入 C:\actions-runner 資料夾。
+按照 GitHub 提供的說明註冊 runner，命令類似這樣：
 
-進入解壓後資料夾：
+./config.cmd --url https://github.com/username/repository --token YOUR_TOKEN
 
-cd C:\actions-runner
-.\config.cmd --url https://github.com/<user>/<repo> --token <TOKEN>
-📍 啟動 runner
-前台模式（測試）
-.\run.cmd
-背景服務模式
-# 安裝為 Windows 服務
-.\svc install
+啟動 Runner：
 
-# 啟動
-.\svc start
-⭐ GitHub Actions Workflow
+運行以下命令啟動 runner：
 
-這是完整的 CI/CD YAML 設定（已修正 Node/部署/Debug）：
+./run.cmd
 
+此時，runner 會開始等待來自 GitHub Actions 的工作。
+
+步驟 3：創建 .github 資料夾並設置工作流程文件
+
+創建 .github 資料夾：
+
+在你的專案根目錄下創建一個名為 .github 的資料夾，然後在該資料夾內創建一個名為 workflows 的子資料夾。
+mkdir -p .github/workflows
+
+添加 GitHub Actions 工作流程文件：
+
+在 .github/workflows 資料夾內創建一個名為 ci-cd.yml 的文件，內容如下：
 name: Vue CI/CD (Local Deploy)
 
 on:
   push:
-    branches:
-      - master
+    branches: [ "master" ]
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted
+    runs-on: self-hosted  # 使用自託管的 runner
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Use Node.js 18
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-
-      - name: Debug Node environment
-        run: |
-          where node
-          node -v
-          npm -v
-        shell: cmd
 
       - name: Install dependencies
-        run: npm ci
-        shell: cmd
+        run: npm install
 
       - name: Build
         run: npm run build
-        shell: cmd
 
       - name: Deploy to local folder
         shell: cmd
@@ -135,77 +88,50 @@ jobs:
             echo dist not found
             exit 1
           )
-          if not exist "C:\deploy\vueapp" (
-            mkdir "C:\deploy\vueapp"
-          )
-          xcopy dist "C:\deploy\vueapp" /E /I /Y
+          xcopy dist C:\deploy\vueapp /E /I /Y
 
       - name: Start server
         shell: cmd
         run: |
           start /B npx serve -s C:\deploy\vueapp -l 5000
-🧠 版本相容性 & Node 版本問題
 
-Vue CLI 與 Node 版本密切相關：
+步驟 4：將變更推送到 GitHub
 
-📌 Vue CLI（@vue/cli 5）在某些模組上不完全支援最新 Node 版本（如 Node 20）
-部分舊 package 會報出 Engine 不相容錯誤，因此建議使用 Node 18 LTS。(github.com
-)
+創建完 GitHub Actions 工作流程後，將你的程式碼推送到 GitHub 儲存庫：
 
-Vue CLI 官方文件也提醒需管理 Node 版本（可用 nvm / nvm‑windows）以確保相容性。(cli.vuejs.org
-)
+git add .github/
+git commit -m "Add GitHub Actions CI/CD workflow"
+git push origin master
 
-🧩 實作問題紀錄 & 解決方法
-❗ 問題 1 — CI npm install 找不到舊 NVM 路徑
+當你推送更改到 master 分支時，GitHub Actions 將自動觸發，並在你的自託管 Runner 上運行管道。
 
-錯誤Log
+步驟 5：本地部署應用程式
 
-Error: Could not find a part of the path 'C:\nvm4w\nodejs'
+當 CI/CD 管道成功完成後，將自動把構建後的 Vue 應用部署到本地伺服器。
 
-原因
+構建好的文件會被複製到 C:\deploy\vueapp 資料夾（如工作流程所定義）。
+本地伺服器將使用 npx serve 啟動，並且綁定在端口 5000。
 
-runner 當時的 PATH 仍然指向舊 NVM 安裝的 Node 路徑。CI 跑 npm install 時找不到 node.exe。
+你現在可以在瀏覽器中訪問你的 Vue 應用，網址為 http://localhost:5000。
 
-解法
+排錯與解決方法
+問題：npm install 遇到 Node.js 版本錯誤
+問題：
 
-確認 runner.exe 所在環境安裝正確 Node 18
-移除過期的 C:\nvm4w\nodejs 環境變數 / PATH
-刪掉 .path 快照讓 runner 重新載入系統 PATH
-確保 workflow 使用 actions/setup-node@v4 指定 Node18
-❗ 問題 2 — 無法啟動 runner 服務
+有時候你可能會遇到與 Node.js 版本相容性的錯誤，特別是使用 Vue CLI 時。例如：
 
-錯誤Log
+Error: Could not find a part of the path 'C:\nvm4w\nodejs'.
+解決方法：
+確保你已安裝 Node.js v18.x 並將其設為當前活動版本。
+若需要，使用 nvm (Node 版本管理器) 切換 Node.js 版本。
+如果是在自託管的 runner 中運行，請確保 runner 環境變數和路徑設置正確。
+問題：Runner 配置錯誤
+問題：
 
-'.\svc' 不是 Cmdlet、函數、指令檔或可執行程式
+如果你在設置 GitHub Actions runner 時遇到問題，例如 "Could not find a part of the path" 或令牌註冊錯誤。
 
-原因 & 解法
+解決方法：
+確保 runner 正確配置並已註冊到你的 GitHub 儲存庫中。再次檢查令牌和儲存庫 URL。
+使用 config.cmd 和 run.cmd 腳本來手動配置和啟動 runner。
 
-這表示 runner 尚未安裝成 Windows 服務。需要先用：
-
-.\svc install
-.\svc start
-❗ 問題 3 — 本地 Node 版本過新導致依賴不相容
-
-症狀
-
-npm install / build 時會報錯 "The engine "node" is incompatible with this module"。
-
-分析
-
-Vue CLI 內部部分依賴對 Node 版本 engine 有限制，Node 20 可能造成安裝失敗 / 相依問題。
-
-解法
-
-使用 nvm 或 nvm‑windows 降到 Node 18：
-
-nvm install 18
-nvm use 18
-🧾 總結
-
-這個 CI/CD 實作使用：
-
-✔ Vue CLI + GitHub Action
-✔ Self‑Hosted Runner
-✔ Node 18 LTS
-✔ 本地部署到 Windows 目錄
-✔ 自動啟動靜態伺服器
+心得: vue cli 和 nodejs 的版本問題多多，感覺用vite 會好一點。

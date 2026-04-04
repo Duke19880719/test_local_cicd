@@ -1,6 +1,5 @@
 name: Vue CI/CD (Local Deploy)
 
-
 on:
   push:
     branches: [ "master" ]

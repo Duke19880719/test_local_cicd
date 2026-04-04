@@ -2,7 +2,8 @@ name: Vue CI/CD (Local Deploy)
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
 
 jobs:
   build-and-deploy:
@@ -12,16 +13,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Use Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'   # 可加快 npm install
+
+      - name: Debug Node environment
+        run: |
+          where node
+          node -v
+          npm -v
+        shell: cmd
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+        shell: cmd
 
       - name: Build
         run: npm run build
+        shell: cmd
 
       - name: Deploy to local folder
         shell: cmd
@@ -30,9 +41,14 @@ jobs:
             echo dist not found
             exit 1
           )
-          xcopy dist C:\deploy\vueapp /E /I /Y
+          REM Create folder if not exist
+          if not exist "C:\deploy\vueapp" (
+            mkdir "C:\deploy\vueapp"
+          )
+          xcopy dist "C:\deploy\vueapp" /E /I /Y
 
       - name: Start server
         shell: cmd
         run: |
+          REM start serve on background
           start /B npx serve -s C:\deploy\vueapp -l 5000

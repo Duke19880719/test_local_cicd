@@ -22,7 +22,7 @@ npm install -g @vue/cli
 vue create my-project
 
 
-步驟 2：設置本地 GitHub Actions Runner
+步驟 2：設置本地 GitHub Actions Runner( Self-hosted Runner )
 
 為了讓 GitHub Actions 可以在本地運行（在你的伺服器或機器上），你需要配置一個自託管的 Runner。
 
